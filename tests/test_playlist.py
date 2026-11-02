@@ -105,3 +105,29 @@ def test_empty_singleton_shuffle_and_navigation():
     assert singleton.next_song() is None
     singleton.set_repeat_mode("ALL")
     assert singleton.next_song() is only_node
+
+
+def test_reverse_relinks_nodes_and_preserves_current_identity():
+    playlist = playlist_with_songs(4)
+    original_nodes = list(playlist.iter_forward())
+    playlist.current = original_nodes[2]
+    playlist.reverse()
+    assert list(playlist.iter_forward()) == list(reversed(original_nodes))
+    assert list(playlist.iter_backward()) == original_nodes
+    assert playlist.current is original_nodes[2]
+    assert playlist.validate()
+
+
+def test_sort_relinks_nodes_without_replacing_them():
+    playlist = playlist_with_songs(4)
+    nodes = {id(node) for node in playlist.iter_forward()}
+    playlist.current = playlist.tail
+    playlist.sort_by("artist")
+    assert [node.artist for node in playlist.iter_forward()] == [
+        "Artist 0", "Artist 1", "Artist 2", "Artist 3"
+    ]
+    assert {id(node) for node in playlist.iter_forward()} == nodes
+    assert playlist.current.song_id == "3"
+    assert playlist.validate()
+    with pytest.raises(ValueError):
+        playlist.sort_by("album")
