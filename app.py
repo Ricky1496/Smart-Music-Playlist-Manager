@@ -224,6 +224,8 @@ class PlaylistApp(tk.Tk):
         self.complexity_label.configure(text=complexity)
 
     def refresh(self) -> None:
+        selected = self.table.selection()
+        selected_id = selected[0] if selected else None
         self._refreshing = True
         self.table.delete(*self.table.get_children())
         query = self.search_var.get().strip()
@@ -236,6 +238,8 @@ class PlaylistApp(tk.Tk):
             self.table.insert("", "end", iid=song.song_id,
                               values=(marker + song.title, song.artist,
                                       format_duration(song.duration)), tags=(tag,))
+        if selected_id and self.table.exists(selected_id):
+            self.table.selection_set(selected_id)
         self._refreshing = False
         current = self.playlist.current
         self.now_label.configure(text=self._node_ref(current))
