@@ -55,6 +55,10 @@ class Playlist:
             node = node.next
         return None
 
+    def get_song(self, song_id: str) -> Optional[SongNode]:
+        """Return the node with this ID, or None when it is not in the playlist."""
+        return self._find_node(song_id)
+
     def add_song(self, song: SongNode) -> SongNode:
         """Append a song and return its node."""
         if self._find_node(song.song_id):
@@ -186,6 +190,30 @@ class Playlist:
         if len(nodes) < 2:
             return
         (rng or random).shuffle(nodes)
+        self.head, self.tail = nodes[0], nodes[-1]
+        for index, node in enumerate(nodes):
+            node.prev = nodes[index - 1] if index else None
+            node.next = nodes[index + 1] if index + 1 < len(nodes) else None
+
+    def reverse(self) -> None:
+        """Reverse the order by swapping links on each node in O(n) time."""
+        node = self.head
+        while node is not None:
+            node.prev, node.next = node.next, node.prev
+            node = node.prev  # The original next node after swapping.
+        self.head, self.tail = self.tail, self.head
+
+    def sort_by(self, field: str = "title") -> None:
+        """Sort by title, artist, or duration by relinking existing nodes."""
+        if field not in {"title", "artist", "duration"}:
+            raise ValueError("Sort field must be title, artist, or duration.")
+        nodes = list(self.iter_forward())
+        if field == "duration":
+            nodes.sort(key=lambda song: song.duration)
+        else:
+            nodes.sort(key=lambda song: getattr(song, field).casefold())
+        if not nodes:
+            return
         self.head, self.tail = nodes[0], nodes[-1]
         for index, node in enumerate(nodes):
             node.prev = nodes[index - 1] if index else None
